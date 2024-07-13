@@ -26,6 +26,10 @@ if uploaded_file is not None:
     st.write(f"Guanine (G) count: {g_count}")
     st.write(f"Cytosine (C) count: {c_count}")
     
+    # Calculate and display total nucleotide count
+    total_nucleotides = a_count + t_count + g_count + c_count
+    st.write(f"**Total Nucleotide Count:** {total_nucleotides}")
+    
     # Calculate and display GC content
     gc_content = (g_count + c_count) / len(seq_record.seq) * 100
     st.write(f"**GC Content:** {gc_content:.2f}%")
