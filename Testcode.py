@@ -11,8 +11,8 @@ if uploaded_file is not None:
     stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
     seq_record = SeqIO.read(stringio, "fasta")
     
-    st.write(f"**Sequnece ID  :** {seq_record.id}")
-    st.write(f"**Sequence Length :** {len(seq_record.seq)}")
+    seq_id = f"**Sequence ID  :** {seq_record.id}"
+    seq_length = f"**Sequence Length :** {len(seq_record.seq)}"
     
     # Calculate and display nucleotide counts
     a_count = seq_record.seq.count("A")
@@ -20,27 +20,57 @@ if uploaded_file is not None:
     g_count = seq_record.seq.count("G")
     c_count = seq_record.seq.count("C")
     
-    st.write(f"**Nucleotide Counts as follows :**")
-    st.write(f"Adenine (A) count: {a_count}")
-    st.write(f"Thymine (T) count: {t_count}")
-    st.write(f"Guanine (G) count: {g_count}")
-    st.write(f"Cytosine (C) count: {c_count}")
+    nucleotide_counts = (
+        f"**Nucleotide Counts as follows :**\n"
+        f"Adenine (A) count: {a_count}\n"
+        f"Thymine (T) count: {t_count}\n"
+        f"Guanine (G) count: {g_count}\n"
+        f"Cytosine (C) count: {c_count}\n"
+    )
     
     # Calculate and display total nucleotide count
     total_nucleotides = a_count + t_count + g_count + c_count
-    st.write(f"**Total Nucleotide Count:** {total_nucleotides}")
+    total_nucleotides_str = f"**Total Nucleotide Count:** {total_nucleotides}"
     
     # Calculate and display GC content
     gc_content = (g_count + c_count) / len(seq_record.seq) * 100
-    st.write(f"**GC Content:** {gc_content:.2f}%")
+    gc_content_str = f"**GC Content:** {gc_content:.2f}%"
     
     # Identify ORFs (simple example considering start codons only)
     orfs = [str(seq_record.seq[i:i+3]) for i in range(0, len(seq_record.seq)-2, 3) if seq_record.seq[i:i+3] == "ATG"]
-    st.write(f"**Number of ORFs:** {len(orfs)}")
+    num_orfs = f"**Number of ORFs:** {len(orfs)}"
     
     # Translate DNA sequence to protein sequence
     protein_seq = seq_record.seq.translate(to_stop=True)
+    translated_seq_str = f"**Translated Protein Sequence:**\n{protein_seq}"
+    
+    # Display results in Streamlit
+    st.write(seq_id)
+    st.write(seq_length)
+    st.write(nucleotide_counts)
+    st.write(total_nucleotides_str)
+    st.write(gc_content_str)
+    st.write(num_orfs)
+    st.write(translated_seq_str)
     
     # Display the translated protein sequence in a text area
-    st.write("**Translated Protein Sequence:**")
-    st.text_area("Sequence", str(protein_seq), height=200)
+    st.text_area("Translated Protein Sequence", str(protein_seq), height=200)
+    
+    # Create a text output for download
+    output = (
+        f"{seq_id}\n"
+        f"{seq_length}\n"
+        f"{nucleotide_counts}\n"
+        f"{total_nucleotides_str}\n"
+        f"{gc_content_str}\n"
+        f"{num_orfs}\n"
+        f"{translated_seq_str}\n"
+    )
+    
+    # Provide a download button for the text output
+    st.download_button(
+        label="Download Results as TXT",
+        data=output,
+        file_name="dna_sequence_analysis.txt",
+        mime="text/plain"
+    )
