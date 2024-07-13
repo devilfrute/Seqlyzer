@@ -40,4 +40,7 @@ if uploaded_file is not None:
     
     # Translate DNA sequence to protein sequence
     protein_seq = seq_record.seq.translate(to_stop=True)
-    st.write(f"**Translated Protein Sequence:** {protein_seq}")
+    
+    # Display the translated protein sequence in a text area
+    st.write("**Translated Protein Sequence:**")
+    st.text_area("Protein Sequence", str(protein_seq), height=200)
