@@ -1,8 +1,27 @@
 import streamlit as st
 from Bio import SeqIO
 from io import StringIO
+import pandas as pd
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.linear_model import LogisticRegression
 
-st.title("Seqlyzer")
+# Sample data for training
+data = {
+    'sequence': ['ATGCGTACG', 'GCTAGCTAG', 'TACGTAGCG', 'GCGTACGAT', 'CGTACGTAG'],
+    'label': [1, 0, 1, 0, 1]  # 1 for gene, 0 for non-gene
+}
+df = pd.DataFrame(data)
+
+# Convert sequences to feature vectors
+vectorizer = CountVectorizer(analyzer='char', ngram_range=(1, 3))
+X = vectorizer.fit_transform(df['sequence'])
+y = df['label']
+
+# Train model
+model = LogisticRegression()
+model.fit(X, y)
+
+st.title("Seqlyzer with AI/ML")
 
 uploaded_file = st.file_uploader("Upload a FASTA file", type="fasta")
 
@@ -56,6 +75,16 @@ if uploaded_file is not None:
     # Display the translated protein sequence in a text area
     st.text_area("Translated Protein Sequence", str(protein_seq), height=200)
     
+    # Predict if the sequence is a gene
+    input_seq = [str(seq_record.seq)]
+    input_features = vectorizer.transform(input_seq)
+    gene_prediction = model.predict(input_features)[0]
+    gene_prob = model.predict_proba(input_features)[0][1]
+    
+    prediction_result = "Gene" if gene_prediction == 1 else "Non-Gene"
+    st.write(f"**Gene Prediction:** {prediction_result}")
+    st.write(f"**Probability of being a Gene:** {gene_prob:.2f}")
+    
     # Create a text output for download
     output = (
         f"{seq_id}\n"
@@ -65,6 +94,8 @@ if uploaded_file is not None:
         f"{gc_content_str}\n"
         f"{num_orfs}\n"
         f"{translated_seq_str}\n"
+        f"**Gene Prediction:** {prediction_result}\n"
+        f"**Probability of being a Gene:** {gene_prob:.2f}\n"
     )
     
     # Provide a download button for the complete analysis
