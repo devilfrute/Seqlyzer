@@ -2,13 +2,19 @@ import streamlit as st
 from Bio import SeqIO
 from io import StringIO
 import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
 
-# Sample data for training
+# Sample data for training (this should ideally be replaced with real data)
 data = {
-    'sequence': ['ATGCGTACG', 'GCTAGCTAG', 'TACGTAGCG', 'GCGTACGAT', 'CGTACGTAG'],
-    'label': [1, 0, 1, 0, 1]  # 1 for gene, 0 for non-gene
+    'sequence': [
+        'ATGCGTACG', 'GCTAGCTAG', 'TACGTAGCG', 'GCGTACGAT', 'CGTACGTAG',
+        'ATGCGTACGTTG', 'GCTAGCTAGGGC', 'TACGTAGCGTAT', 'GCGTACGATGCG', 'CGTACGTAGTAC'
+    ],
+    'label': [1, 0, 1, 0, 1, 1, 0, 1, 0, 1]  # 1 for gene, 0 for non-gene
 }
 df = pd.DataFrame(data)
 
@@ -17,9 +23,17 @@ vectorizer = CountVectorizer(analyzer='char', ngram_range=(1, 3))
 X = vectorizer.fit_transform(df['sequence'])
 y = df['label']
 
-# Train model
-model = LogisticRegression()
-model.fit(X, y)
+# Split the data
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Train a RandomForest model
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+
+# Validate the model
+y_pred = model.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Model accuracy: {accuracy}")
 
 st.title("Seqlyzer with AI/ML")
 
