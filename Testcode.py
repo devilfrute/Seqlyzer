@@ -43,4 +43,4 @@ if uploaded_file is not None:
     
     # Display the translated protein sequence in a text area
     st.write("**Translated Protein Sequence:**")
-    st.text_area("Protein Sequence", str(protein_seq), height=200)
+    st.text_area("Sequence", str(protein_seq), height=200)
