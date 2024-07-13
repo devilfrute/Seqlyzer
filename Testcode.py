@@ -11,8 +11,8 @@ if uploaded_file is not None:
     stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
     seq_record = SeqIO.read(stringio, "fasta")
     
-    st.write(f"**This the sequence Id :** {seq_record.id}")
-    st.write(f"**this the Sequence Length:** {len(seq_record.seq)}")
+    st.write(f"**Sequnece ID  :** {seq_record.id}")
+    st.write(f"**Sequence Length :** {len(seq_record.seq)}")
     
     # Calculate and display nucleotide counts
     a_count = seq_record.seq.count("A")
