@@ -20,7 +20,7 @@ if uploaded_file is not None:
     g_count = seq_record.seq.count("G")
     c_count = seq_record.seq.count("C")
     
-    st.write(f"**Nucleotide Counts:**")
+    st.write(f"**Nucleotide Counts as follows :**")
     st.write(f"Adenine (A) count: {a_count}")
     st.write(f"Thymine (T) count: {t_count}")
     st.write(f"Guanine (G) count: {g_count}")
