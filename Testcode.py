@@ -2,75 +2,86 @@ import streamlit as st
 from Bio import SeqIO
 from io import StringIO
 
-st.set_page_config(layout="wide")  # Set wide layout for better aesthetics
+# Set page configuration
+st.set_page_config(page_title="Seqlyzer", page_icon="🔬")
 
-st.title("Seqlyzer: DNA Sequence Analyzer")
+# Title and introduction
+st.title("🔬 Seqlyzer")
+st.markdown("""
+Welcome to Seqlyzer! This tool allows you to analyze DNA sequences from FASTA files. 
+Upload a FASTA file to get started and see detailed information about your DNA sequence.
+""")
 
-# Upload a FASTA file
-uploaded_file = st.file_uploader("Upload a FASTA file", type="fasta")
+# Upload file section
+st.sidebar.header("Upload a FASTA file")
+uploaded_file = st.sidebar.file_uploader("Choose a FASTA file", type="fasta")
 
 if uploaded_file is not None:
     # Decode the uploaded file to a string
-    file_contents = uploaded_file.getvalue().decode("utf-8")
+    stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
+    seq_record = SeqIO.read(stringio, "fasta")
     
-    # Convert to StringIO object
-    stringio = StringIO(file_contents)
+    # Display sequence information
+    st.subheader("Sequence Information")
+    st.markdown(f"""
+    - **Sequence ID:** {seq_record.id}
+    - **Sequence Length:** {len(seq_record.seq)}
+    """)
+
+    # Calculate and display nucleotide counts
+    a_count = seq_record.seq.count("A")
+    t_count = seq_record.seq.count("T")
+    g_count = seq_record.seq.count("G")
+    c_count = seq_record.seq.count("C")
+
+    st.subheader("Nucleotide Counts")
+    st.markdown(f"""
+    - **Adenine (A) count:** {a_count}
+    - **Thymine (T) count:** {t_count}
+    - **Guanine (G) count:** {g_count}
+    - **Cytosine (C) count:** {c_count}
+    """)
+
+    # Calculate and display total nucleotide count
+    total_nucleotides = a_count + t_count + g_count + c_count
+    st.markdown(f"**Total Nucleotide Count:** {total_nucleotides}")
+
+    # Calculate and display GC content
+    gc_content = (g_count + c_count) / len(seq_record.seq) * 100
+    st.markdown(f"**GC Content:** {gc_content:.2f}%")
+
+    # Identify ORFs (simple example considering start codons only)
+    orfs = [str(seq_record.seq[i:i+3]) for i in range(0, len(seq_record.seq)-2, 3) if seq_record.seq[i:i+3] == "ATG"]
+    st.markdown(f"**Number of ORFs:** {len(orfs)}")
+
+    # Create a text output for download
+    output = (
+        f"Sequence ID: {seq_record.id}\n"
+        f"Sequence Length: {len(seq_record.seq)}\n"
+        f"Nucleotide Counts:\n"
+        f"  Adenine (A): {a_count}\n"
+        f"  Thymine (T): {t_count}\n"
+        f"  Guanine (G): {g_count}\n"
+        f"  Cytosine (C): {c_count}\n"
+        f"Total Nucleotide Count: {total_nucleotides}\n"
+        f"GC Content: {gc_content:.2f}%\n"
+        f"Number of ORFs: {len(orfs)}\n"
+    )
     
-    try:
-        # Read the sequence record from the StringIO object
-        seq_record = SeqIO.read(stringio, "fasta")
-        
-        # Display sequence information
-        st.header("Sequence Information")
-        st.write(f"Sequence ID: {seq_record.id}")
-        st.write(f"Sequence Length: {len(seq_record.seq)}")
-        
-        # Visualize the DNA sequence
-        st.header("Sequence Visualization")
-        seq_str = str(seq_record.seq)
-        st.text_area("DNA Sequence", seq_str, height=300)
-        
-        # Calculate GC content
-        g_count = seq_record.seq.count("G")
-        c_count = seq_record.seq.count("C")
-        gc_content = (g_count + c_count) / len(seq_record.seq) * 100
-        st.write(f"GC Content: {gc_content:.2f}%")
-        
-        # Detect ORFs (example: finding start codons)
-        orfs = []
-        for i in range(len(seq_record.seq) - 2):
-            if seq_record.seq[i:i+3] == "ATG":
-                orf = seq_record.seq[i:]
-                orfs.append(orf)
-        
-        # Display ORFs
-        st.header("Open Reading Frames (ORFs)")
-        
-        # Display total number of ORFs detected
-        st.write(f"Total ORFs found: {len(orfs)}")
-        
-        # Get user input for ORF numbers to display in detail
-        orf_numbers_input = st.text_input("Enter ORF numbers (comma-separated)", "")
-        orf_numbers = [int(num.strip()) for num in orf_numbers_input.split(',') if num.strip().isdigit()]
-        
-        # Validate ORF numbers entered by the user
-        invalid_orfs = [num for num in orf_numbers if num <= 0 or num > len(orfs)]
-        
-        if invalid_orfs:
-            st.error(f"Invalid ORF numbers: {', '.join(map(str, invalid_orfs))}. Enter valid ORF numbers.")
-        
-        else:
-            for orf_num in orf_numbers:
-                orf_index = orf_num - 1  # Convert to zero-indexed for list access
-                if orf_index < len(orfs):
-                    st.subheader(f"ORF {orf_num}")
-                    st.write(f"Sequence: {orfs[orf_index]}")
-                    st.download_button(
-                        label=f"Download ORF {orf_num} Sequence",
-                        data=str(orfs[orf_index]),
-                        file_name=f"orf_{orf_num}.txt",
-                        mime="text/plain"
-                    )
-    
-    except Exception as e:
-        st.error(f"Error reading file: {str(e)}")
+    # Provide a download button for the complete analysis
+    st.sidebar.download_button(
+        label="Download Complete Analysis as TXT",
+        data=output,
+        file_name="dna_sequence_analysis.txt",
+        mime="text/plain"
+    )
+
+    st.sidebar.success("Analysis complete! Check the main page for results and download options.")
+
+else:
+    st.warning("Please upload a FASTA file to analyze.")
+
+st.sidebar.markdown("""
+---
+Developed by VAMSI
+""")
