@@ -3,56 +3,59 @@ from Bio import SeqIO
 from io import StringIO
 
 # Set page configuration
-st.set_page_config(page_title="Seqlyzer", page_icon="🔬")
+st.set_page_config(
+    page_title="Seqlyzer - DNA Sequence Analysis",
+    page_icon="🧬",
+    layout="wide"
+)
 
-# Title and introduction
-st.title("🔬 Seqlyzer")
+# Main title and introduction
+st.title("🧬 Seqlyzer - DNA Sequence Analysis")
 st.markdown("""
-Welcome to Seqlyzer! This tool allows you to analyze DNA sequences from FASTA files. 
-Upload a FASTA file to get started and see detailed information about your DNA sequence.
+Welcome to Seqlyzer! Upload a FASTA file to analyze DNA sequences and get detailed information.
 """)
 
-# Upload file section
-st.sidebar.header("Upload a FASTA file")
+# Sidebar for file upload
+st.sidebar.header("Upload a FASTA File")
 uploaded_file = st.sidebar.file_uploader("Choose a FASTA file", type="fasta")
 
 if uploaded_file is not None:
     # Decode the uploaded file to a string
     stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
     seq_record = SeqIO.read(stringio, "fasta")
-    
-    # Display sequence information
+
+    # Main content area
     st.subheader("Sequence Information")
-    st.markdown(f"""
-    - **Sequence ID:** {seq_record.id}
-    - **Sequence Length:** {len(seq_record.seq)}
-    """)
-
-    # Calculate and display nucleotide counts
-    a_count = seq_record.seq.count("A")
-    t_count = seq_record.seq.count("T")
-    g_count = seq_record.seq.count("G")
-    c_count = seq_record.seq.count("C")
-
-    st.subheader("Nucleotide Counts")
-    st.markdown(f"""
-    - **Adenine (A) count:** {a_count}
-    - **Thymine (T) count:** {t_count}
-    - **Guanine (G) count:** {g_count}
-    - **Cytosine (C) count:** {c_count}
-    """)
+    col1, col2 = st.columns([1, 2])
+    
+    with col1:
+        st.write(f"**Sequence ID:** {seq_record.id}")
+        st.write(f"**Sequence Length:** {len(seq_record.seq)}")
+    
+    with col2:
+        # Display nucleotide counts
+        a_count = seq_record.seq.count("A")
+        t_count = seq_record.seq.count("T")
+        g_count = seq_record.seq.count("G")
+        c_count = seq_record.seq.count("C")
+        
+        st.write(f"**Nucleotide Counts:**")
+        st.write(f"Adenine (A): {a_count}")
+        st.write(f"Thymine (T): {t_count}")
+        st.write(f"Guanine (G): {g_count}")
+        st.write(f"Cytosine (C): {c_count}")
 
     # Calculate and display total nucleotide count
     total_nucleotides = a_count + t_count + g_count + c_count
-    st.markdown(f"**Total Nucleotide Count:** {total_nucleotides}")
+    st.write(f"**Total Nucleotide Count:** {total_nucleotides}")
 
     # Calculate and display GC content
     gc_content = (g_count + c_count) / len(seq_record.seq) * 100
-    st.markdown(f"**GC Content:** {gc_content:.2f}%")
+    st.write(f"**GC Content:** {gc_content:.2f}%")
 
     # Identify ORFs (simple example considering start codons only)
     orfs = [str(seq_record.seq[i:i+3]) for i in range(0, len(seq_record.seq)-2, 3) if seq_record.seq[i:i+3] == "ATG"]
-    st.markdown(f"**Number of ORFs:** {len(orfs)}")
+    st.write(f"**Number of ORFs:** {len(orfs)}")
 
     # Create a text output for download
     output = (
@@ -67,7 +70,7 @@ if uploaded_file is not None:
         f"GC Content: {gc_content:.2f}%\n"
         f"Number of ORFs: {len(orfs)}\n"
     )
-    
+
     # Provide a download button for the complete analysis
     st.sidebar.download_button(
         label="Download Complete Analysis as TXT",
@@ -81,7 +84,8 @@ if uploaded_file is not None:
 else:
     st.warning("Please upload a FASTA file to analyze.")
 
+# Footer
 st.sidebar.markdown("""
 ---
-Developed by VAMSI
+Developed by [Your Name]
 """)
