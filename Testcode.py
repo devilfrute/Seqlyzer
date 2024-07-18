@@ -1,91 +1,124 @@
 import streamlit as st
 from Bio import SeqIO
-from io import StringIO
+from Bio.Seq import Seq
+from Bio.SeqUtils import GC, molecular_weight
+import re
 
-# Set page configuration
-st.set_page_config(
-    page_title="Seqlyzer - DNA Sequence Analysis",
-    page_icon="🧬",
-    layout="wide"
-)
+# Function to calculate GC content and ATGC count
+def calculate_gc_atgc(sequence):
+    gc_content = GC(sequence)
+    atgc_counts = {
+        'A': sequence.count('A'),
+        'T': sequence.count('T'),
+        'G': sequence.count('G'),
+        'C': sequence.count('C')
+    }
+    return gc_content, atgc_counts
 
-# Main title and introduction
-st.title("🧬 Seqlyzer - DNA Sequence Analysis")
-st.markdown("""
-Welcome to Seqlyzer! Upload a FASTA file to analyze DNA sequences and get detailed information.
-""")
-
-# Sidebar for file upload
-st.sidebar.header("Upload a FASTA File")
-uploaded_file = st.sidebar.file_uploader("Choose a FASTA file", type="fasta")
-
-if uploaded_file is not None:
-    # Decode the uploaded file to a string
-    stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
-    seq_record = SeqIO.read(stringio, "fasta")
-
-    # Main content area
-    st.subheader("Sequence Information")
-    col1, col2 = st.columns([1, 2])
+# Function to find ORFs
+def find_orfs(sequence):
+    orfs = []
+    start_codon = "ATG"
+    stop_codons = ["TAA", "TAG", "TGA"]
     
-    with col1:
-        st.write(f"**Sequence ID:** {seq_record.id}")
-        st.write(f"**Sequence Length:** {len(seq_record.seq)}")
+    for match in re.finditer(r'(?=(ATG(?:...)*?)(?=TAA|TAG|TGA))', str(sequence)):
+        orf = match.group()
+        orfs.append(orf)
     
-    with col2:
-        # Display nucleotide counts
-        a_count = seq_record.seq.count("A")
-        t_count = seq_record.seq.count("T")
-        g_count = seq_record.seq.count("G")
-        c_count = seq_record.seq.count("C")
+    return orfs
+
+# Function to detect SNPs
+def detect_snps(sequence, reference):
+    snps = []
+    for i, (nuc_seq, nuc_ref) in enumerate(zip(sequence, reference)):
+        if nuc_seq != nuc_ref:
+            snps.append(f"Position {i+1}: {nuc_ref} -> {nuc_seq}")
+    return snps
+
+# Function to detect restriction sites
+def detect_restriction_sites(sequence):
+    restriction_sites = {
+        'EcoRI': 'GAATTC',
+        'BamHI': 'GGATCC',
+        'HindIII': 'AAGCTT'
+    }
+    found_sites = []
+    for name, site in restriction_sites.items():
+        matches = [m.start() for m in re.finditer(site, str(sequence))]
+        found_sites.extend([(name, match) for match in matches])
+    return found_sites
+
+# Main Streamlit app
+def main():
+    st.title("Seqlyzer: DNA Sequence Analyzer")
+    
+    # Upload a FASTA file
+    uploaded_file = st.file_uploader("Upload a FASTA file", type="fasta")
+    
+    if uploaded_file is not None:
+        # Parse the uploaded file
+        seq_record = SeqIO.read(uploaded_file, "fasta")
+        sequence = seq_record.seq
         
-        st.write(f"**Nucleotide Counts:**")
-        st.write(f"Adenine (A): {a_count}")
-        st.write(f"Thymine (T): {t_count}")
-        st.write(f"Guanine (G): {g_count}")
-        st.write(f"Cytosine (C): {c_count}")
+        # Calculate GC content and ATGC count
+        gc_content, atgc_counts = calculate_gc_atgc(sequence)
+        
+        # Display sequence information
+        st.header("Sequence Information")
+        st.write(f"Sequence ID: {seq_record.id}")
+        st.write(f"Sequence Length: {len(sequence)}")
+        
+        # Display GC content and ATGC counts
+        st.header("Nucleotide Analysis")
+        st.write(f"GC Content: {gc_content:.2f}%")
+        st.write("ATGC Counts:")
+        st.write(f"A: {atgc_counts['A']}")
+        st.write(f"T: {atgc_counts['T']}")
+        st.write(f"G: {atgc_counts['G']}")
+        st.write(f"C: {atgc_counts['C']}")
+        
+        # Find ORFs
+        orfs = find_orfs(sequence)
+        st.header("Open Reading Frames (ORFs)")
+        if orfs:
+            st.write(f"Number of ORFs found: {len(orfs)}")
+            for i, orf in enumerate(orfs):
+                st.write(f"ORF {i+1}: {orf}")
+        else:
+            st.write("No ORFs found.")
+        
+        # Translate DNA sequence to protein sequence
+        protein_seq = sequence.translate(to_stop=True)
+        
+        # Display translated protein sequence
+        st.header("Translated Protein Sequence")
+        st.text_area("Protein Sequence", str(protein_seq), height=200)
+        
+        # Detect SNPs (compare with a reference sequence)
+        reference_sequence = Seq("ATGCGTACGCGT")
+        snps = detect_snps(sequence, reference_sequence)
+        
+        # Display SNPs
+        st.header("Single Nucleotide Polymorphisms (SNPs)")
+        if snps:
+            for snp in snps:
+                st.write(snp)
+        else:
+            st.write("No SNPs detected.")
+        
+        # Detect restriction sites
+        restriction_sites = detect_restriction_sites(sequence)
+        
+        # Display restriction sites
+        st.header("Restriction Sites")
+        if restriction_sites:
+            for site in restriction_sites:
+                st.write(f"{site[0]} site found at position {site[1]}")
+        else:
+            st.write("No restriction sites found.")
+    
+    else:
+        st.write("Upload a FASTA file to get started.")
 
-    # Calculate and display total nucleotide count
-    total_nucleotides = a_count + t_count + g_count + c_count
-    st.write(f"**Total Nucleotide Count:** {total_nucleotides}")
-
-    # Calculate and display GC content
-    gc_content = (g_count + c_count) / len(seq_record.seq) * 100
-    st.write(f"**GC Content:** {gc_content:.2f}%")
-
-    # Identify ORFs (simple example considering start codons only)
-    orfs = [str(seq_record.seq[i:i+3]) for i in range(0, len(seq_record.seq)-2, 3) if seq_record.seq[i:i+3] == "ATG"]
-    st.write(f"**Number of ORFs:** {len(orfs)}")
-
-    # Create a text output for download
-    output = (
-        f"Sequence ID: {seq_record.id}\n"
-        f"Sequence Length: {len(seq_record.seq)}\n"
-        f"Nucleotide Counts:\n"
-        f"  Adenine (A): {a_count}\n"
-        f"  Thymine (T): {t_count}\n"
-        f"  Guanine (G): {g_count}\n"
-        f"  Cytosine (C): {c_count}\n"
-        f"Total Nucleotide Count: {total_nucleotides}\n"
-        f"GC Content: {gc_content:.2f}%\n"
-        f"Number of ORFs: {len(orfs)}\n"
-    )
-
-    # Provide a download button for the complete analysis
-    st.sidebar.download_button(
-        label="Download Complete Analysis as TXT",
-        data=output,
-        file_name="dna_sequence_analysis.txt",
-        mime="text/plain"
-    )
-
-    st.sidebar.success("Analysis complete! Check the main page for results and download options.")
-
-else:
-    st.warning("Please upload a FASTA file to analyze.")
-
-# Footer
-st.sidebar.markdown("""
----
-Developed by [Your Name]
-""")
+if __name__ == "__main__":
+    main()
