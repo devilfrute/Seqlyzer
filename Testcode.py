@@ -25,6 +25,11 @@ if uploaded_file is not None:
         st.write(f"Sequence ID: {seq_record.id}")
         st.write(f"Sequence Length: {len(seq_record.seq)}")
         
+        # Visualize the DNA sequence
+        st.header("Sequence Visualization")
+        seq_str = str(seq_record.seq)
+        st.text_area("DNA Sequence", seq_str, height=300)
+        
         # Calculate GC content
         g_count = seq_record.seq.count("G")
         c_count = seq_record.seq.count("C")
