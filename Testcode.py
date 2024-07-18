@@ -1,6 +1,8 @@
 import streamlit as st
 from Bio import SeqIO
-from io import BytesIO, StringIO
+from io import StringIO
+
+st.set_page_config(layout="wide")  # Set wide layout for better aesthetics
 
 st.title("Seqlyzer: DNA Sequence Analyzer")
 
@@ -38,23 +40,30 @@ if uploaded_file is not None:
         
         # Display ORFs
         st.header("Open Reading Frames (ORFs)")
-        orf_option = st.radio("Select Option:", ("Summary", "Detail"))
         
-        if orf_option == "Summary":
-            if orfs:
-                st.write(f"Number of ORFs found: {len(orfs)}")
-            else:
-                st.write("No ORFs found.")
+        # Display total number of ORFs detected
+        st.write(f"Total ORFs found: {len(orfs)}")
         
-        elif orf_option == "Detail":
-            for i, orf in enumerate(orfs):
-                orf_header = f"ORF {i+1}"
-                if st.checkbox(orf_header):
-                    st.write(f"Sequence: {orf}")
+        # Get user input for ORF numbers to display in detail
+        orf_numbers_input = st.text_input("Enter ORF numbers (comma-separated)", "")
+        orf_numbers = [int(num.strip()) for num in orf_numbers_input.split(',') if num.strip().isdigit()]
+        
+        # Validate ORF numbers entered by the user
+        invalid_orfs = [num for num in orf_numbers if num <= 0 or num > len(orfs)]
+        
+        if invalid_orfs:
+            st.error(f"Invalid ORF numbers: {', '.join(map(str, invalid_orfs))}. Enter valid ORF numbers.")
+        
+        else:
+            for orf_num in orf_numbers:
+                orf_index = orf_num - 1  # Convert to zero-indexed for list access
+                if orf_index < len(orfs):
+                    st.subheader(f"ORF {orf_num}")
+                    st.write(f"Sequence: {orfs[orf_index]}")
                     st.download_button(
-                        label="Download ORF Sequence",
-                        data=str(orf),
-                        file_name=f"orf_{i+1}.txt",
+                        label=f"Download ORF {orf_num} Sequence",
+                        data=str(orfs[orf_index]),
+                        file_name=f"orf_{orf_num}.txt",
                         mime="text/plain"
                     )
     
