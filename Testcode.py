@@ -113,7 +113,7 @@ def main():
         st.header("Restriction Sites")
         if restriction_sites:
             for site in restriction_sites:
-                st.write(f"{site[0]} site found at position {site[1]}")
+                st.write(f"{site[0]} site are found at position {site[1]}")
         else:
             st.write("No restriction sites found.")
     
