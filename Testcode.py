@@ -50,9 +50,6 @@ if uploaded_file is not None:
     gc_content = (g_count + c_count) / len(seq_record.seq) * 100
     st.markdown(f"**GC Content:** {gc_content:.2f}%")
 
-    # Identify ORFs (simple example considering start codons only)
-    orfs = [str(seq_record.seq[i:i+3]) for i in range(0, len(seq_record.seq)-2, 3) if seq_record.seq[i:i+3] == "ATG"]
-    st.markdown(f"**Number of ORFs:** {len(orfs)}")
 
     # Create a text output for download
     output = (
