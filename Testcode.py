@@ -38,19 +38,25 @@ if uploaded_file is not None:
         
         # Display ORFs
         st.header("Open Reading Frames (ORFs)")
-        if orfs:
-            st.write(f"Number of ORFs found: {len(orfs)}")
+        orf_option = st.radio("Select Option:", ("Summary", "Detail"))
+        
+        if orf_option == "Summary":
+            if orfs:
+                st.write(f"Number of ORFs found: {len(orfs)}")
+            else:
+                st.write("No ORFs found.")
+        
+        elif orf_option == "Detail":
             for i, orf in enumerate(orfs):
-                st.write(f"ORF {i+1}: {orf}")
-        else:
-            st.write("No ORFs found.")
-        
-        # Translate DNA sequence to protein sequence
-        protein_seq = seq_record.seq.translate(to_stop=True)
-        
-        # Display translated protein sequence
-        st.header("Translated Protein Sequence")
-        st.text_area("Protein Sequence", str(protein_seq), height=200)
+                orf_header = f"ORF {i+1}"
+                if st.checkbox(orf_header):
+                    st.write(f"Sequence: {orf}")
+                    st.download_button(
+                        label="Download ORF Sequence",
+                        data=str(orf),
+                        file_name=f"orf_{i+1}.txt",
+                        mime="text/plain"
+                    )
     
     except Exception as e:
         st.error(f"Error reading file: {str(e)}")
