@@ -62,7 +62,7 @@ if uploaded_file is not None:
         f"  Cytosine (C): {c_count}\n"
         f"Total Nucleotide Count: {total_nucleotides}\n"
         f"GC Content: {gc_content:.2f}%\n"
-        f"Number of ORFs: {len(orfs)}\n"
+           
     )
     
     # Provide a download button for the complete analysis
