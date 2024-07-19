@@ -1,59 +1,79 @@
 import streamlit as st
-from Bio import SeqIO
-from io import StringIO
-from Bio.Seq import Seq
-from Bio.SeqRecord import SeqRecord
+from Bio import Entrez, SeqIO
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.feature_extraction import DictVectorizer
+from sklearn.metrics import accuracy_score, confusion_matrix
 
-# Set page configuration
-st.set_page_config(page_title="Seqlyzer", page_icon="🔬")
-
-# Title and introduction
-st.title("🔬 Seqlyzer")
-st.markdown("""
-Welcome to Seqlyzer! This tool allows you to analyze DNA sequences from FASTA files. 
-Upload a FASTA file to get started and see detailed information about your DNA sequence.
-""")
-
-# Upload file section
-st.sidebar.header("Upload a FASTA file")
-uploaded_file = st.sidebar.file_uploader("Choose a FASTA file", type="fasta")
-
-if uploaded_file is not None:
-    # Decode the uploaded file to a string
-    stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
-    seq_record = SeqIO.read(stringio, "fasta")
+# Function to fetch sequences from NCBI
+def fetch_sequences(email, gene="BRCA1", organism="Homo sapiens", retmax=10):
+    Entrez.email = email
+    handle = Entrez.esearch(db="nucleotide", term=f"{gene}[Gene] AND {organism}[Organism]", retmax=retmax)
+    record = Entrez.read(handle)
+    ids = record["IdList"]
     
-    # Display sequence information
-    st.subheader("Sequence Information")
-    st.markdown(f"""
-    - **Sequence ID:** {seq_record.id}
-    - **Sequence Length:** {len(seq_record.seq)}
-    """)
+    sequences = []
+    for seq_id in ids:
+        handle = Entrez.efetch(db="nucleotide", id=seq_id, rettype="fasta", retmode="text")
+        seq_record = SeqIO.read(handle, "fasta")
+        sequences.append(seq_record.seq)
+    return sequences
 
-    # Calculate and display nucleotide counts
-    a_count = seq_record.seq.count("A")
-    t_count = seq_record.seq.count("T")
-    g_count = seq_record.seq.count("G")
-    c_count = seq_record.seq.count("C")
+# Function to extract k-mer features from sequences
+def kmer_count(seq, k=3):
+    kmer_dict = {}
+    for i in range(len(seq) - k + 1):
+        kmer = seq[i:i+k]
+        if kmer in kmer_dict:
+            kmer_dict[kmer] += 1
+        else:
+            kmer_dict[kmer] = 1
+    return kmer_dict
 
-    st.subheader("Nucleotide Counts")
-    st.markdown(f"""
-    - **Adenine (A) count:** {a_count}
-    - **Thymine (T) count:** {t_count}
-    - **Guanine (G) count:** {g_count}
-    - **Cytosine (C) count:** {c_count}
-    """)
+# Streamlit app interface
+st.title("SNP Detection and Classification")
 
-    # Calculate and display total nucleotide count
-    total_nucleotides = a_count + t_count + g_count + c_count
-    st.markdown(f"Total Nucleotide Count: {total_nucleotides}")
+email = st.text_input("Enter your email:")
+gene = st.text_input("Enter the gene (default: BRCA1):", "BRCA1")
+organism = st.text_input("Enter the organism (default: Homo sapiens):", "Homo sapiens")
+retmax = st.number_input("Number of sequences to fetch (default: 10):", 1, 100, 10)
 
-    # Calculate and display GC content
-    gc_content = (g_count + c_count) / len(seq_record.seq) * 100
-    st.markdown(f"**GC Content:** {gc_content:.2f}%")
+if st.button("Fetch and Analyze Sequences"):
+    with st.spinner("Fetching sequences from NCBI..."):
+        sequences = fetch_sequences(email, gene, organism, retmax)
+    
+    if sequences:
+        st.success("Sequences fetched successfully!")
 
-# Sidebar footer
-st.sidebar.markdown("""
----
-Developed by VAMSI S
-""")
+        # Extracting features
+        with st.spinner("Extracting k-mer features..."):
+            features = [kmer_count(str(seq)) for seq in sequences]
+
+        # Simulated labels (for simplicity, let's create dummy labels)
+        labels = [1 if i % 2 == 0 else 0 for i in range(len(features))]
+
+        # Vectorizing features
+        vectorizer = DictVectorizer(sparse=False)
+        X = vectorizer.fit_transform(features)
+        y = labels
+
+        # Splitting data
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+        # Training model
+        model = LogisticRegression()
+        model.fit(X_train, y_train)
+
+        # Making predictions
+        predictions = model.predict(X_test)
+
+        # Evaluating model
+        accuracy = accuracy_score(y_test, predictions)
+        confusion = confusion_matrix(y_test, predictions)
+
+        st.subheader("Model Evaluation")
+        st.write(f"Accuracy: {accuracy}")
+        st.write("Confusion Matrix:")
+        st.write(confusion)
+    else:
+        st.error("No sequences found. Please check your input and try again.")
