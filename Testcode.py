@@ -29,7 +29,7 @@ if uploaded_file is not None:
     """)
 
     # Show details button
-    if st.button("Show Details"):
+    if st.button("Nucleotide Count details"):
         # Calculate and display nucleotide counts
         a_count = seq_record.seq.count("A")
         t_count = seq_record.seq.count("T")
