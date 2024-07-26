@@ -16,6 +16,10 @@ Upload a FASTA file to get started and see detailed information about your DNA s
 st.sidebar.header("Upload a FASTA file")
 uploaded_file = st.sidebar.file_uploader("Choose a FASTA file", type="fasta")
 
+# Initialize the session state for toggling visibility
+if "show_details" not in st.session_state:
+    st.session_state.show_details = False
+
 if uploaded_file is not None:
     # Decode the uploaded file to a string
     stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
@@ -28,8 +32,12 @@ if uploaded_file is not None:
     - **Sequence Length:** {len(seq_record.seq)}
     """)
 
-    # Show details button
-    if st.button("Nucleotide Count details"):
+    # Toggle visibility of details
+    if st.button("Toggle Details"):
+        st.session_state.show_details = not st.session_state.show_details
+
+    # Show or hide details based on the session state
+    if st.session_state.show_details:
         # Calculate and display nucleotide counts
         a_count = seq_record.seq.count("A")
         t_count = seq_record.seq.count("T")
