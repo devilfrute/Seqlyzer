@@ -6,7 +6,7 @@ from io import StringIO
 st.set_page_config(page_title="Seqlyzer", page_icon="🔬")
 
 # Title and introduction
-st.title("🔬 Seqlyzer")
+st.title("🧬 Seqlyzer")
 st.markdown("""
 Welcome to Seqlyzer! This tool allows you to analyze DNA sequences from FASTA files.
 Upload a FASTA file to get started and see detailed information about your DNA sequence.
