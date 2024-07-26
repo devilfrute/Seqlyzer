@@ -73,7 +73,17 @@ if uploaded_file is not None:
         # Translate the sequence
         protein_seq = seq_record.seq.translate()
         st.subheader("🧬 Translated Protein Sequence")
-        st.text(protein_seq)
+        
+        # Display protein sequence in a text area
+        st.text_area("🧬 Protein Sequence", str(protein_seq), height=150)
+        
+        # Provide a download button for the translated protein sequence
+        st.download_button(
+            label="Download Protein Sequence",
+            data=str(protein_seq),
+            file_name=f"{seq_record.id}_protein_sequence.txt",
+            mime="text/plain"
+        )
 
 # Sidebar footer
 st.sidebar.markdown("""
