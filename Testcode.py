@@ -1,8 +1,6 @@
 import streamlit as st
 from Bio import SeqIO
 from io import StringIO
-from Bio.Seq import Seq
-from Bio.SeqRecord import SeqRecord
 
 # Set page configuration
 st.set_page_config(page_title="Seqlyzer", page_icon="🔬")
@@ -30,27 +28,29 @@ if uploaded_file is not None:
     - **Sequence Length:** {len(seq_record.seq)}
     """)
 
-    # Calculate and display nucleotide counts
-    a_count = seq_record.seq.count("A")
-    t_count = seq_record.seq.count("T")
-    g_count = seq_record.seq.count("G")
-    c_count = seq_record.seq.count("C")
+    # Show details button
+    if st.button("Show Details"):
+        # Calculate and display nucleotide counts
+        a_count = seq_record.seq.count("A")
+        t_count = seq_record.seq.count("T")
+        g_count = seq_record.seq.count("G")
+        c_count = seq_record.seq.count("C")
 
-    st.subheader("Nucleotide Counts")
-    st.markdown(f"""
-    - **Adenine (A) count:** {a_count}
-    - **Thymine (T) count:** {t_count}
-    - **Guanine (G) count:** {g_count}
-    - **Cytosine (C) count:** {c_count}
-    """)
+        st.subheader("Nucleotide Counts")
+        st.markdown(f"""
+        - **Adenine (A) count:** {a_count}
+        - **Thymine (T) count:** {t_count}
+        - **Guanine (G) count:** {g_count}
+        - **Cytosine (C) count:** {c_count}
+        """)
 
-    # Calculate and display total nucleotide count
-    total_nucleotides = a_count + t_count + g_count + c_count
-    st.markdown(f"Total Nucleotide Count: {total_nucleotides}")
+        # Calculate and display total nucleotide count
+        total_nucleotides = a_count + t_count + g_count + c_count
+        st.markdown(f"Total Nucleotide Count: {total_nucleotides}")
 
-    # Calculate and display GC content
-    gc_content = (g_count + c_count) / len(seq_record.seq) * 100
-    st.markdown(f"**GC Content:** {gc_content:.2f}%")
+        # Calculate and display GC content
+        gc_content = (g_count + c_count) / len(seq_record.seq) * 100
+        st.markdown(f"**GC Content:** {gc_content:.2f}%")
 
 # Sidebar footer
 st.sidebar.markdown("""
