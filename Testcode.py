@@ -4,7 +4,7 @@ from io import StringIO
 from Bio.Seq import Seq
 
 # Set page configuration
-st.set_page_config(page_title="Seqlyzer", page_icon="")
+st.set_page_config(page_title=" 🧬Seqlyzer 🧬", page_icon="")
 
 # Title and introduction
 st.title("Seqlyzer")
@@ -79,9 +79,9 @@ if uploaded_file is not None:
         
         # Provide a download button for the translated protein sequence
         st.download_button(
-            label="Download Protein Sequence",
+            label="Download translated sequence",
             data=str(protein_seq),
-            file_name=f"{seq_record.id}_protein_sequence.txt",
+            file_name=f"{seq_record.id}translated_seq.txt",
             mime="text/plain"
         )
 
