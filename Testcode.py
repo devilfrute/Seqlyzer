@@ -50,10 +50,10 @@ if uploaded_file is not None:
 
 
         st.markdown(f"""
-        - **Adenine (A) count:** {a_count}
-        - **Thymine (T) count:** {t_count}
-        - **Guanine (G) count:** {g_count}
-        - **Cytosine (C) count:** {c_count}
+        - **(A)denine  count:** {a_count}
+        - **(T)hymine  count:** {t_count}
+        - **(G)uanine  count:** {g_count}
+        - **(C)ytosine count:** {c_count}
         """)
 
         # Calculate and display total nucleotide count
