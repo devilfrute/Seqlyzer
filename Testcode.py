@@ -4,10 +4,10 @@ from io import StringIO
 from Bio.Seq import Seq
 
 # Set page configuration
-st.set_page_config(page_title="  🧬 🧬 🧬 🧬 🧬🧬", page_icon="")
+st.set_page_config(page_title=" 🧬seqlyzer🧬", page_icon="")
 
 # Title and introduction
-st.title(" 🧬Seqlyzer")
+st.title("Seqlyzer")
 st.markdown("""
 Welcome to Seqlyzer! This tool allows you to analyze DNA sequences from FASTA files.
 Upload a FASTA file to get started and see detailed information about your DNA sequence.
