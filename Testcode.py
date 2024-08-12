@@ -37,7 +37,7 @@ if uploaded_file is not None:
     """)
 
     # Toggle visibility of details
-    if st.button("Toggle Details"):
+    if st.button("Nucleotide Counts"):
         st.session_state.show_details = not st.session_state.show_details
 
     # Show or hide details based on the session state
@@ -48,7 +48,7 @@ if uploaded_file is not None:
         g_count = seq_record.seq.count("G")
         c_count = seq_record.seq.count("C")
 
-        st.subheader(" Nucleotide Counts")
+
         st.markdown(f"""
         - **Adenine (A) count:** {a_count}
         - **Thymine (T) count:** {t_count}
