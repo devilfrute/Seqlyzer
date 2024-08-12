@@ -88,5 +88,5 @@ if uploaded_file is not None:
 # Sidebar footer
 st.sidebar.markdown("""
 ---
-Developed by VAMSI S
+Developed by ANUPAM
 """)
