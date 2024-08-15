@@ -1,63 +1,59 @@
-
-
 import streamlit as st
-from stmol import showmol
-import py3Dmol
-import requests
-import biotite.structure.io as bsio
+from Bio import SeqIO
+from io import StringIO
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
 
-#st.set_page_config(layout = 'wide')
-st.sidebar.title('🎈 ESMFold')
-st.sidebar.write('[*ESMFold*](https://esmatlas.com/about) is an end-to-end single sequence protein structure predictor based on the ESM-2 language model. For more information, read the [research article](https://www.biorxiv.org/content/10.1101/2022.07.20.500902v2) and the [news article](https://www.nature.com/articles/d41586-022-03539-1) published in *Nature*.')
+# Set page configuration
+st.set_page_config(page_title="Seqlyzer", page_icon="🔬")
 
-# stmol
-def render_mol(pdb):
-    pdbview = py3Dmol.view()
-    pdbview.addModel(pdb,'pdb')
-    pdbview.setStyle({'cartoon':{'color':'spectrum'}})
-    pdbview.setBackgroundColor('white')#('0xeeeeee')
-    pdbview.zoomTo()
-    pdbview.zoom(2, 800)
-    pdbview.spin(True)
-    showmol(pdbview, height = 500,width=800)
+# Title and introduction
+st.title("🔬 Seqlyzer")
+st.markdown("""
+Welcome to Seqlyzer! This tool allows you to analyze DNA sequences from FASTA files.
+Upload a FASTA file to get started and see detailed information about your DNA sequence.
+""")
 
-# Protein sequence input
-DEFAULT_SEQ = "MGSSHHHHHHSSGLVPRGSHMRGPNPTAASLEASAGPFTVRSFTVSRPSGYGAGTVYYPTNAGGTVGAIAIVPGYTARQSSIKWWGPRLASHGFVVITIDTNSTLDQPSSRSSQQMAALRQVASLNGTSSSPIYGKVDTARMGVMGWSMGGGGSLISAANNPSLKAAAPQAPWDSSTNFSSVTVPTLIFACENDSIAPVNSSALPIYDSMSRNAKQFLEINGGSHSCANSGNSNQALIGKKGVAWMKRFMDNDTRYSTFACENPNSTRVSDFRTANCSLEDPAANKARKEAELAAATAEQ"
-txt = st.sidebar.text_area('Input sequence', DEFAULT_SEQ, height=275)
+# Upload file section
+st.sidebar.header("Upload a FASTA file")
+uploaded_file = st.sidebar.file_uploader("Choose a FASTA file", type="fasta")
 
-# ESMfold
-def update(sequence=txt):
-    headers = {
-        'Content-Type': 'application/x-www-form-urlencoded',
-    }
-    response = requests.post('https://api.esmatlas.com/foldSequence/v1/pdb/', headers=headers, data=sequence)
-    name = sequence[:3] + sequence[-3:]
-    pdb_string = response.content.decode('utf-8')
+if uploaded_file is not None:
+    # Decode the uploaded file to a string
+    stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
+    seq_record = SeqIO.read(stringio, "fasta")
 
-    with open('predicted.pdb', 'w') as f:
-        f.write(pdb_string)
+    # Display sequence information
+    st.subheader("Sequence Information")
+    st.markdown(f"""
+    - **Sequence ID:** {seq_record.id}
+    - **Sequence Length:** {len(seq_record.seq)}
+    """)
 
-    struct = bsio.load_structure('predicted.pdb', extra_fields=["b_factor"])
-    b_value = round(struct.b_factor.mean(), 4)
+    # Calculate and display nucleotide counts
+    a_count = seq_record.seq.count("A")
+    t_count = seq_record.seq.count("T")
+    g_count = seq_record.seq.count("G")
+    c_count = seq_record.seq.count("C")
 
-    # Display protein structure
-    st.subheader('Visualization of predicted protein structure')
-    render_mol(pdb_string)
+    st.subheader("Nucleotide Counts")
+    st.markdown(f"""
+    - **Adenine (A) count:** {a_count}
+    - **Thymine (T) count:** {t_count}
+    - **Guanine (G) count:** {g_count}
+    - **Cytosine (C) count:** {c_count}
+    """)
 
-    # plDDT value is stored in the B-factor field
-    st.subheader('plDDT')
-    st.write('plDDT is a per-residue estimate of the confidence in prediction on a scale from 0-100.')
-    st.info(f'plDDT: {b_value}')
+    # Calculate and display total nucleotide count
+    total_nucleotides = a_count + t_count + g_count + c_count
+    st.markdown(f"Total Nucleotide Count: {total_nucleotides}")
 
-    st.download_button(
-        label="Download PDB",
-        data=pdb_string,
-        file_name='predicted.pdb',
-        mime='text/plain',
-    )
+    # Calculate and display GC content
+    gc_content = (g_count + c_count) / len(seq_record.seq) * 100
+    st.markdown(f"**GC Content:** {gc_content:.2f}%")
 
-predict = st.sidebar.button('Predict', on_click=update)
-
-
-if not predict:
-    st.warning('👈 Enter protein sequence data!')
+# Sidebar footer
+st.sidebar.markdown("""
+---
+Developed by VAMSI S
+""")
