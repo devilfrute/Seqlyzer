@@ -1,92 +1,64 @@
+# This is app is created by Chanin Nantasenamat (Data Professor) https://youtube.com/dataprofessor
+# Credit: This app is inspired by https://huggingface.co/spaces/osanseviero/esmfold
+
 import streamlit as st
-from Bio import SeqIO
-from io import StringIO
-from Bio.Seq import Seq
+from stmol import showmol
+import py3Dmol
+import requests
+import biotite.structure.io as bsio
 
-# Set page configuration
-st.set_page_config(page_title=" 🧬seqlyzer🧬", page_icon="")
+#st.set_page_config(layout = 'wide')
+st.sidebar.title('🎈 ESMFold')
+st.sidebar.write('[*ESMFold*](https://esmatlas.com/about) is an end-to-end single sequence protein structure predictor based on the ESM-2 language model. For more information, read the [research article](https://www.biorxiv.org/content/10.1101/2022.07.20.500902v2) and the [news article](https://www.nature.com/articles/d41586-022-03539-1) published in *Nature*.')
 
-# Title and introduction
-st.title("Seqlyzer")
-st.markdown("""
-Welcome to Seqlyzer! This tool allows you to analyze DNA sequences from FASTA files.
-Upload a FASTA file to get started and see detailed information about your DNA sequence.
-""")
+# stmol
+def render_mol(pdb):
+    pdbview = py3Dmol.view()
+    pdbview.addModel(pdb,'pdb')
+    pdbview.setStyle({'cartoon':{'color':'spectrum'}})
+    pdbview.setBackgroundColor('white')#('0xeeeeee')
+    pdbview.zoomTo()
+    pdbview.zoom(2, 800)
+    pdbview.spin(True)
+    showmol(pdbview, height = 500,width=800)
 
-# Upload file section
-st.sidebar.header("Upload a FASTA file")
-uploaded_file = st.sidebar.file_uploader("Choose a FASTA file", type="fasta")
+# Protein sequence input
+DEFAULT_SEQ = "MGSSHHHHHHSSGLVPRGSHMRGPNPTAASLEASAGPFTVRSFTVSRPSGYGAGTVYYPTNAGGTVGAIAIVPGYTARQSSIKWWGPRLASHGFVVITIDTNSTLDQPSSRSSQQMAALRQVASLNGTSSSPIYGKVDTARMGVMGWSMGGGGSLISAANNPSLKAAAPQAPWDSSTNFSSVTVPTLIFACENDSIAPVNSSALPIYDSMSRNAKQFLEINGGSHSCANSGNSNQALIGKKGVAWMKRFMDNDTRYSTFACENPNSTRVSDFRTANCSLEDPAANKARKEAELAAATAEQ"
+txt = st.sidebar.text_area('Input sequence', DEFAULT_SEQ, height=275)
 
-# Initialize the session state for toggling visibility
-if "show_details" not in st.session_state:
-    st.session_state.show_details = False
+# ESMfold
+def update(sequence=txt):
+    headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+    }
+    response = requests.post('https://api.esmatlas.com/foldSequence/v1/pdb/', headers=headers, data=sequence)
+    name = sequence[:3] + sequence[-3:]
+    pdb_string = response.content.decode('utf-8')
 
-if "show_translation" not in st.session_state:
-    st.session_state.show_translation = False
+    with open('predicted.pdb', 'w') as f:
+        f.write(pdb_string)
 
-if uploaded_file is not None:
-    # Decode the uploaded file to a string
-    stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
-    seq_record = SeqIO.read(stringio, "fasta")
+    struct = bsio.load_structure('predicted.pdb', extra_fields=["b_factor"])
+    b_value = round(struct.b_factor.mean(), 4)
 
-    # Display sequence information
-    st.subheader("Sequence Information")
-    st.markdown(f"""
-    - **Sequence ID:** {seq_record.id}
-    - **Sequence Length:** {len(seq_record.seq)}
-    """)
+    # Display protein structure
+    st.subheader('Visualization of predicted protein structure')
+    render_mol(pdb_string)
 
-    # Toggle visibility of details
-    if st.button("Nucleotide Counts"):
-        st.session_state.show_details = not st.session_state.show_details
+    # plDDT value is stored in the B-factor field
+    st.subheader('plDDT')
+    st.write('plDDT is a per-residue estimate of the confidence in prediction on a scale from 0-100.')
+    st.info(f'plDDT: {b_value}')
 
-    # Show or hide details based on the session state
-    if st.session_state.show_details:
-        # Calculate and display nucleotide counts
-        a_count = seq_record.seq.count("A")
-        t_count = seq_record.seq.count("T")
-        g_count = seq_record.seq.count("G")
-        c_count = seq_record.seq.count("C")
+    st.download_button(
+        label="Download PDB",
+        data=pdb_string,
+        file_name='predicted.pdb',
+        mime='text/plain',
+    )
+
+predict = st.sidebar.button('Predict', on_click=update)
 
 
-        st.markdown(f"""
-        - **(A)denine  count:** {a_count}
-        - **(T)hymine  count:** {t_count}
-        - **(G)uanine  count:** {g_count}
-        - **(C)ytosine count:** {c_count}
-        """)
-
-        # Calculate and display total nucleotide count
-        total_nucleotides = a_count + t_count + g_count + c_count
-        st.markdown(f"Total Nucleotide Count: {total_nucleotides}")
-
-        # Calculate and display GC content
-        gc_content = (g_count + c_count) / len(seq_record.seq) * 100
-        st.markdown(f"** GC Content:** {gc_content:.2f}%")
-
-    # Toggle visibility of translation
-    if st.button("Show Translation"):
-        st.session_state.show_translation = not st.session_state.show_translation
-
-    # Show or hide translation based on the session state
-    if st.session_state.show_translation:
-        # Translate the sequence
-        protein_seq = seq_record.seq.translate()
-        st.subheader(" Translated Protein Sequence")
-        
-        # Display protein sequence in a text area
-        st.text_area("Protein Sequence", str(protein_seq), height=150)
-        
-        # Provide a download button for the translated protein sequence
-        st.download_button(
-            label="Download translated sequence",
-            data=str(protein_seq),
-            file_name=f"{seq_record.id}translated_seq.txt",
-            mime="text/plain"
-        )
-
-# Sidebar footer
-st.sidebar.markdown("""
----
-Developed by ANUPAM
-""")
+if not predict:
+    st.warning('👈 Enter protein sequence data!')
