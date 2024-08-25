@@ -1,4 +1,4 @@
-import streamlit as st # type: ignore
+import streamlit as st
 from Bio import SeqIO
 from io import StringIO
 from Bio.Seq import Seq
